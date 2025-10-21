@@ -29,8 +29,9 @@ public class PointService {
      * */
     public UserPoint chargePoint(long id, long amount){
         // 충전 금액은 0보다 작을 수 없습니다.
-         Optional.ofNullable(amount >= 0 ? true : null)
-            .orElseThrow(() -> new ErrorException(ErrorCode.CHARGE_LESS_THAN_ZERO));
+        if (amount < 0) {
+            throw new ErrorException(ErrorCode.CHARGE_LESS_THAN_ZERO);
+        }
             
         UserPoint userPoint = this.getPoint(id);
         long currentPoint = userPoint.point();
