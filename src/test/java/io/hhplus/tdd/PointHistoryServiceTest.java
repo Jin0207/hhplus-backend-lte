@@ -94,4 +94,23 @@ public class PointHistoryServiceTest {
        assertEquals(expected.amount(), result.amount(), "조회된 포인트는 Mock 설정값(2000)과 일치해야 합니다.");
        assertEquals(expected.type(), result.type(), "조회된 충전유형은 Mock 설정값(CHARGE)과 일치해야 합니다.");
     }
+
+    @Test
+    @DisplayName("사용자가 포인트 사용내역을 포인트 히스토리를 저장한다.")
+    void 포인트_사용_이력_저장() {
+        // given
+        Long id = 1L;
+        Long chargeAmount = 2000L;
+
+        PointHistory expected = new PointHistory(id, id, chargeAmount, TransactionType.USE, System.currentTimeMillis());
+
+        given(pointHistoryTable.insert(eq(id), eq(chargeAmount), eq(TransactionType.USE), anyLong()))
+            .willReturn(expected);
+        // when
+        PointHistory result = pointHistoryService.insertUseHistory(id, chargeAmount);
+
+        // then
+       assertEquals(expected.amount(), result.amount(), "조회된 포인트는 Mock 설정값(2000)과 일치해야 합니다.");
+       assertEquals(expected.type(), result.type(), "조회된 충전유형은 Mock 설정값(USE)과 일치해야 합니다.");
+    }
 }

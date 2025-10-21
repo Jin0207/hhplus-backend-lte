@@ -27,4 +27,13 @@ public class PointHistoryService {
     public PointHistory insertChargeHistory(long id, long amount){
         return pointHistoryTable.insert(id, amount, TransactionType.CHARGE, System.currentTimeMillis());
     }
+    /**
+     * 사용자의 포인트 사용이력을 저장한다.
+     * @param id 사용자아이디
+     * @param amount 사용포인트
+     * @return PointHistory    
+     * */
+    public PointHistory insertUseHistory(long id, long amount){
+        return pointHistoryTable.insert(id, amount, TransactionType.USE, System.currentTimeMillis());
+    }
 }

@@ -93,4 +93,69 @@ public class PointServiceTest {
         assertEquals(ErrorCode.CHARGE_LESS_THAN_ZERO, exception.getErrorCode());
         assertEquals("충전 금액은 0보다 작을 수 없습니다.", exception.getMessage()); 
     }
+    /**
+     * 사용자 포인트 사용
+     */
+    @Test
+    @DisplayName("사용자가 포인트를 사용한다.")
+    void 포인트_사용() {
+        // given
+        Long id = 1L;
+        Long useAmount = 3000L;
+        Long remainAmount = 2000L;
+
+        UserPoint current = new UserPoint(id, 5000L, System.currentTimeMillis());
+        UserPoint expected = new UserPoint(id, 2000L, System.currentTimeMillis());
+  
+        given(userPointTable.selectById(id)).willReturn(current);
+        given(userPointTable.insertOrUpdate(id, remainAmount)).willReturn(expected);
+
+        // when
+        UserPoint result = pointService.usePoint(id, useAmount);
+
+        // then
+       assertEquals(expected.point(), result.point(), "조회된 포인트는 Mock 설정값(2000)과 일치해야 합니다.");
+    }
+
+    @Test
+    @DisplayName("포인트 사용 금액이 0보다 작으면 예외를 던진다.")
+    void 포인트_사용_실패_음수() {
+        // given
+        Long id = 1L;
+        Long useAmount = -1000L;
+
+        UserPoint current = new UserPoint(id, 2000L, System.currentTimeMillis());
+  
+        given(userPointTable.selectById(id)).willReturn(current);
+
+        // when & then
+        ErrorException exception = assertThrows(ErrorException.class, () -> {
+            pointService.usePoint(id, useAmount);
+        });
+        
+        // then
+        assertEquals(ErrorCode.POINT_USE_LESS_THAN_ZERO, exception.getErrorCode());
+        assertEquals("포인트 사용금액은 0보다 작을 수 없습니다.", exception.getMessage()); 
+    }
+
+    @Test
+    @DisplayName("포인트 사용 금액이 보유포인트보다 크면 예외를 던진다.")
+    void 포인트_사용_실패_잔여_포인트_적음() {
+        // given
+        Long id = 1L;
+        Long useAmount = 3000L;
+
+        UserPoint current = new UserPoint(id, 2000L, System.currentTimeMillis());
+  
+        given(userPointTable.selectById(id)).willReturn(current);
+
+        // when & then
+        ErrorException exception = assertThrows(ErrorException.class, () -> {
+            pointService.usePoint(id, useAmount);
+        });
+        
+        // then
+        assertEquals(ErrorCode.POINT_USE_MORE_THAN_REMAIN, exception.getErrorCode());
+        assertEquals("포인트 사용 금액이 보유 포인트보다 많을 수 없습니다.", exception.getMessage()); 
+    }
 }

@@ -39,4 +39,28 @@ public class PointService {
         userPoint = userPointTable.insertOrUpdate(id, totalPoint);
         return userPoint;
     }
+
+     /**
+     * 사용자의 포인트를 사용한다.
+     * @param id 사용자 아이디
+     * @param amount 사용포인트
+     * @return UserPoint     
+     * */
+    public UserPoint usePoint(long id, long amount){
+        UserPoint userPoint = this.getPoint(id);
+        long currentPoint = userPoint.point();
+        long remainPoint = currentPoint - amount;
+
+        // 포인트 사용금액은 0보다 작을 수 없습니다.
+        if (remainPoint < 0) {
+            throw new ErrorException(ErrorCode.POINT_USE_MORE_THAN_REMAIN);
+        }
+        // 포인트 사용 금액이 보유 포인트보다 많을 수 없습니다..
+        else if(amount < 0){  
+            throw new ErrorException(ErrorCode.POINT_USE_LESS_THAN_ZERO);
+        }
+
+        userPoint = userPointTable.insertOrUpdate(id, remainPoint);
+        return userPoint;
+    }
 }
