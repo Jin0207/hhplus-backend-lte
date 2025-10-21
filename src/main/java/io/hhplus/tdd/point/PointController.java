@@ -49,7 +49,9 @@ public class PointController {
             @PathVariable long id,
             @RequestBody long amount
     ) {
-        return new UserPoint(0, 0, 0);
+        UserPoint userPoint = pointService.chargePoint(id, amount);
+        pointHistroyService.insertChargeHistory(id, amount);
+        return userPoint;
     }
 
     /**

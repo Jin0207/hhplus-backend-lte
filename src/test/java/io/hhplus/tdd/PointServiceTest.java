@@ -1,5 +1,6 @@
 package io.hhplus.tdd;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 
 import org.junit.jupiter.api.DisplayName;
@@ -52,5 +53,44 @@ public class PointServiceTest {
 
         // then
         assertEquals(expected, result.point(), "조회된 포인트는 Mock 설정값(0)과 일치해야 합니다.");
+    }
+    /**
+     * 사용자 포인트 충전
+     */
+    @Test
+    @DisplayName("사용자가 포인트를 충전한다.")
+    void 포인트_충전() {
+        // given
+        Long id = 1L;
+        Long chargeAmount = 2000L;
+
+        UserPoint current = new UserPoint(id, 0L, System.currentTimeMillis());
+        UserPoint expected = new UserPoint(id, 0L, System.currentTimeMillis());
+  
+        given(userPointTable.selectById(id)).willReturn(current);
+        given(userPointTable.insertOrUpdate(id, chargeAmount)).willReturn(expected);
+
+        // when
+        UserPoint result = pointService.chargePoint(id, chargeAmount);
+
+        // then
+       assertEquals(expected.point(), result.point(), "조회된 포인트는 Mock 설정값(2000)과 일치해야 합니다.");
+    }
+
+    @Test
+    @DisplayName("포인트 충전 금액이 0보다 작으면 예외를 던진다.")
+    void 포인트_충전_실패() {
+        // given
+        Long id = 1L;
+        Long chargeAmount = -1000L;
+
+        // when & then
+        ErrorException exception = assertThrows(ErrorException.class, () -> {
+            pointService.chargePoint(id, chargeAmount);
+        });
+        
+        // then
+        assertEquals(ErrorCode.CHARGE_LESS_THAN_ZERO, exception.getErrorCode());
+        assertEquals("충전 금액은 0보다 작을 수 없습니다.", exception.getMessage()); 
     }
 }

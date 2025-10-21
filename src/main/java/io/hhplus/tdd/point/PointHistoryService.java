@@ -18,4 +18,13 @@ public class PointHistoryService {
     public List<PointHistory> getHistories(long id){
         return pointHistoryTable.selectAllByUserId(id);
     }
+    /**
+     * 사용자의 포인트 충전이력을 저장한다.
+     * @param id 사용자아이디
+     * @param amount 충전포인트
+     * @return PointHistory    
+     * */
+    public PointHistory insertChargeHistory(long id, long amount){
+        return pointHistoryTable.insert(id, amount, TransactionType.CHARGE, System.currentTimeMillis());
+    }
 }

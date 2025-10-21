@@ -2,6 +2,8 @@ package io.hhplus.tdd;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 import java.util.Collections;
@@ -26,7 +28,9 @@ public class PointHistoryServiceTest {
 
     @InjectMocks
     private PointHistoryService pointHistoryService;
-
+    /*
+     * 사용자 포인트 조회
+     */
     @Test
     @DisplayName("내역이 없는 사용자의 포인트 내역정보 조회.")
     void 내역_없는_사용자_포인트_내역정보_조회() {
@@ -69,5 +73,25 @@ public class PointHistoryServiceTest {
        assertEquals(500L, result.get(2).amount(), "세 번째 이력의 포인트는 500원 이어야 합니다.");
        assertEquals(TransactionType.USE, result.get(2).type(), "세 번째 이력은 사용이어야 합니다.");
     }
-    
+    /**
+     * 사용자 포인트 충전/사용내역
+     */
+    @Test
+    @DisplayName("사용자가 포인트를 충전하여 포인트 히스토리를 저장한다.")
+    void 포인트_충전_이력_저장() {
+        // given
+        Long id = 1L;
+        Long chargeAmount = 2000L;
+
+        PointHistory expected = new PointHistory(id, id, chargeAmount, TransactionType.CHARGE, System.currentTimeMillis());
+
+        given(pointHistoryTable.insert(eq(id), eq(chargeAmount), eq(TransactionType.CHARGE), anyLong()))
+            .willReturn(expected);
+        // when
+        PointHistory result = pointHistoryService.insertChargeHistory(id, chargeAmount);
+
+        // then
+       assertEquals(expected.amount(), result.amount(), "조회된 포인트는 Mock 설정값(2000)과 일치해야 합니다.");
+       assertEquals(expected.type(), result.type(), "조회된 충전유형은 Mock 설정값(CHARGE)과 일치해야 합니다.");
+    }
 }
