@@ -1,6 +1,6 @@
 package io.hhplus.tdd.point;
 
-import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.stereotype.Service;
 
@@ -12,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class PointService {
-     private final UserPointTable userPointTable;
+    private final UserPointTable userPointTable;
+    private final UserLockManager userLockManager;
+
     /**
      * 사용자의 포인트를 조회한다.
      * @param id 사용자 아이디
@@ -21,7 +23,7 @@ public class PointService {
     public UserPoint getPoint(long id){
         return userPointTable.selectById(id);
     }
-     /**
+    /**
      * 사용자의 포인트를 충전한다.
      * @param id 사용자 아이디
      * @param ammount 충전포인트
@@ -32,16 +34,23 @@ public class PointService {
         if (amount < 0) {
             throw new ErrorException(ErrorCode.CHARGE_LESS_THAN_ZERO);
         }
+
+        ReentrantLock lock = userLockManager.getLock(id);
+        lock.lock();
+
+        try{
+            UserPoint userPoint = this.getPoint(id);
+            long currentPoint = userPoint.point();
+            long totalPoint = currentPoint + amount;
             
-        UserPoint userPoint = this.getPoint(id);
-        long currentPoint = userPoint.point();
-        long totalPoint = currentPoint + amount;
-        
-        userPoint = userPointTable.insertOrUpdate(id, totalPoint);
-        return userPoint;
+            userPoint = userPointTable.insertOrUpdate(id, totalPoint);
+            return userPoint;
+        }finally{
+            lock.unlock();
+        }
     }
 
-     /**
+    /**
      * 사용자의 포인트를 사용한다.
      * @param id 사용자 아이디
      * @param amount 사용포인트
@@ -51,7 +60,7 @@ public class PointService {
         UserPoint userPoint = this.getPoint(id);
         long currentPoint = userPoint.point();
         long remainPoint = currentPoint - amount;
-
+        
         // 포인트 사용금액은 0보다 작을 수 없습니다.
         if (remainPoint < 0) {
             throw new ErrorException(ErrorCode.POINT_USE_MORE_THAN_REMAIN);
@@ -60,8 +69,15 @@ public class PointService {
         else if(amount < 0){  
             throw new ErrorException(ErrorCode.POINT_USE_LESS_THAN_ZERO);
         }
+        
+        ReentrantLock lock = userLockManager.getLock(id);
+        lock.lock();
 
-        userPoint = userPointTable.insertOrUpdate(id, remainPoint);
-        return userPoint;
+        try{
+            userPoint = userPointTable.insertOrUpdate(id, remainPoint);
+            return userPoint;
+        }finally{
+            lock.unlock();
+        }
     }
 }
